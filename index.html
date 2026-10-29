@@ -1,0 +1,551 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Dackelzucht</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+<style>
+/* Layout: ein Zuchtbuch von oben nach unten, wie das Arbeitsblatt; das Zuchtpaar-Feld klebt unten am Bildschirm. */
+:root{
+  --bg:#f1f4ee; --surface:#ffffff; --fg:#1b2820; --muted:#5a6a60; --line:#cdd7c8;
+  --accent:#2d6a4c; --accent-soft:#dcebe1; --brown:#94552a; --brown-soft:#f3e3d4;
+  --scan:#ffffff; --warn:#a2431f;
+  --display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body:"Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --shadow:0 1px 2px rgb(20 40 28 / .08), 0 4px 14px rgb(20 40 28 / .08);
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#111813; --surface:#19231c; --fg:#e4ece6; --muted:#9aaa9f; --line:#2c3a31;
+  --accent:#74c49a; --accent-soft:#1f3a2b; --brown:#e0a06b; --brown-soft:#3a2a1d;
+  --scan:#f4f4f0; --warn:#f08a62; --shadow:0 1px 2px rgb(0 0 0 / .4), 0 6px 18px rgb(0 0 0 / .35); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#111813; --surface:#19231c; --fg:#e4ece6; --muted:#9aaa9f; --line:#2c3a31;
+  --accent:#74c49a; --accent-soft:#1f3a2b; --brown:#e0a06b; --brown-soft:#3a2a1d;
+  --scan:#f4f4f0; --warn:#f08a62; --shadow:0 1px 2px rgb(0 0 0 / .4), 0 6px 18px rgb(0 0 0 / .35); color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px;line-height:1.5}
+.wrap{max-width:1180px;margin:0 auto;padding-block:20px 0;padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));display:flex;flex-direction:column;gap:28px}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0;line-height:1.1}
+h1{font-size:clamp(2rem,5vw,3.2rem);font-weight:800;letter-spacing:-.02em}
+h2{font-size:1.45rem;font-weight:800}
+h3{font-size:1.1rem;font-weight:600}
+p{margin:0}
+.eyebrow{font-size:.78rem;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:700}
+button{font:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+
+header.top{display:flex;flex-wrap:wrap;gap:16px 24px;align-items:end;justify-content:space-between}
+header.top .intro{display:flex;flex-direction:column;gap:8px;max-width:62ch}
+.btn{border:1.5px solid var(--line);background:var(--surface);color:var(--fg);border-radius:10px;padding:8px 14px;font-weight:700}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--bg)}
+.btn.primary:disabled{opacity:.4;cursor:not-allowed}
+
+/* Weg zum Dackel */
+.meter{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.meter-head{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:baseline}
+.meter-head strong{font-family:var(--display)}
+.steps{display:grid;grid-template-columns:repeat(9,1fr);gap:6px}
+.step{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:.72rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.step .pic{width:100%;aspect-ratio:7/5;border-radius:6px;background:var(--scan);overflow:hidden;border:2px solid transparent;opacity:.45;transition:opacity .3s, border-color .3s}
+.step .pic img{width:100%;height:100%;object-fit:cover;display:block}
+.step.reached .pic{opacity:1}
+.step.best .pic{border-color:var(--brown)}
+.step.best{color:var(--brown);font-weight:700}
+
+/* Aufgabe 1 */
+.task{display:flex;flex-direction:column;gap:14px}
+.task-text{max-width:70ch;color:var(--muted)}
+.task-text b{color:var(--fg)}
+.families{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.family{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.parents{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;width:min(100%,360px);margin:0 auto}
+.times{font-family:var(--display);font-size:1.4rem;color:var(--muted)}
+.bracket{height:22px;margin:0 12.5%;border:2px solid var(--line);border-bottom:0;border-radius:14px 14px 0 0;position:relative}
+.bracket::before{content:"";position:absolute;left:50%;top:-12px;height:12px;border-left:2px dashed var(--line)}
+.kids{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+
+/* Hundekarte */
+.dog{background:var(--surface);border:1.5px solid var(--line);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;min-width:0;user-select:none;-webkit-user-select:none;transition:transform .15s, box-shadow .15s, opacity .3s, border-color .15s}
+.dog .pic{background:var(--scan);aspect-ratio:7/5;display:block;overflow:hidden}
+.dog .pic img{width:100%;height:100%;object-fit:contain;display:block;transform-origin:50% 92%;pointer-events:none;-webkit-user-drag:none}
+.dog .meta{padding:6px 8px 8px;display:flex;flex-direction:column;gap:1px}
+.dog .name{font-weight:700;display:flex;justify-content:space-between;gap:6px;align-items:baseline;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dog .sex{font-weight:700;color:var(--muted);font-size:.95rem}
+.dog .cm{font-size:.82rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.dog.small .meta{padding:4px 6px 6px}
+.dog.small .name{font-size:.88rem}
+.dog.draggable{cursor:grab;touch-action:none;box-shadow:var(--shadow);border-color:var(--accent)}
+.dog.draggable:hover{transform:translateY(-2px)}
+.dog.picked{opacity:.35;transform:none;box-shadow:none}
+.dog.locked{opacity:.55}
+.dog.chosen{opacity:1;border-color:var(--brown)}
+.dog .tag{display:none;font-size:.7rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--brown)}
+.dog.chosen .tag{display:block}
+.dog.dackel{border-color:var(--brown);border-width:3px}
+.ghost{position:fixed;z-index:50;pointer-events:none;width:150px;transform:rotate(-3deg) scale(1.04);box-shadow:0 12px 30px rgb(0 0 0 / .25);cursor:grabbing}
+
+/* Generationen */
+#gens{display:flex;flex-direction:column;gap:22px}
+.gen{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:10px;animation:rise .4s ease-out both}
+.gen-head{display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px 16px;align-items:baseline}
+.gen .parents{width:min(100%,320px)}
+.gen .kids{max-width:760px;width:100%;margin:0 auto}
+.gen .bracket{max-width:570px;width:75%;margin:0 auto}
+.label{font-size:.85rem;color:var(--muted);text-align:center;font-weight:700}
+.feedback{font-size:.95rem;color:var(--muted);text-align:center;max-width:65ch;margin:0 auto}
+.feedback b{color:var(--fg)}
+.kids .dog{animation:rise .35s ease-out both}
+.kids .dog:nth-child(2){animation-delay:.08s}.kids .dog:nth-child(3){animation-delay:.16s}.kids .dog:nth-child(4){animation-delay:.24s}
+@keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* Zuchtpaar-Feld */
+.breed{position:sticky;bottom:0;z-index:20;margin-left:calc(-1 * max(16px, env(safe-area-inset-left, 0px)));margin-right:calc(-1 * max(16px, env(safe-area-inset-right, 0px)));background:color-mix(in srgb, var(--bg) 88%, transparent);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-top:1px solid var(--line);padding-block:12px calc(12px + env(safe-area-inset-bottom, 0px));padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
+.breed-inner{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:auto 1fr;gap:10px 20px;align-items:center}
+.breed-title{display:flex;flex-direction:column;gap:2px}
+.breed-row{display:flex;gap:12px;align-items:center;justify-content:flex-end;flex-wrap:wrap}
+.slots{display:flex;gap:10px;align-items:center}
+.slot{width:132px;min-height:118px;border:2px dashed var(--line);border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:var(--muted);font-size:.85rem;text-align:center;background:var(--surface);transition:border-color .15s, background .15s;position:relative}
+.slot .big{font-family:var(--display);font-size:1.6rem;line-height:1}
+.slot.over{border-color:var(--accent);background:var(--accent-soft)}
+.slot.filled{border-style:solid;border-color:var(--accent);padding:0;overflow:hidden;cursor:pointer}
+.slot.filled .dog{border:0;border-radius:0;width:100%}
+.slot.shake{animation:shake .35s}
+@keyframes shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.msg{font-size:.9rem;color:var(--muted);min-height:1.4em;max-width:52ch}
+.msg.warn{color:var(--warn)}
+
+/* Gewonnen */
+.win{background:var(--brown-soft);border:2px solid var(--brown);border-radius:18px;padding:20px;display:grid;grid-template-columns:minmax(0,260px) minmax(0,1fr);gap:20px;animation:rise .5s ease-out both}
+.win h2{color:var(--brown);font-size:clamp(1.6rem,4vw,2.3rem)}
+.win-body{display:flex;flex-direction:column;gap:12px;min-width:0}
+.book{overflow-x:auto}
+.book table{border-collapse:collapse;width:100%;font-size:.9rem;font-variant-numeric:tabular-nums}
+.book th,.book td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+.book th{font-size:.75rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+textarea{width:100%;min-height:110px;font:inherit;padding:10px;border-radius:10px;border:1.5px solid var(--line);background:var(--surface);color:var(--fg);resize:vertical}
+.foot{color:var(--muted);font-size:.8rem;padding-bottom:12px}
+
+@media (max-width:860px){
+  .families{grid-template-columns:1fr}
+  .breed-inner{grid-template-columns:1fr}
+  .breed-row{justify-content:space-between}
+}
+@media (max-width:520px){
+  .kids{grid-template-columns:repeat(2,1fr)}
+  .bracket{margin:0 25%}
+  .steps{gap:3px}
+  .step span{font-size:.62rem}
+  .slot{width:84px;min-height:84px;font-size:.72rem}
+  .slot .big{font-size:1.2rem}
+  .breed{padding-block:8px calc(8px + env(safe-area-inset-bottom, 0px))}
+  .breed-inner{gap:4px}
+  .breed-title h3{font-size:.95rem}
+  .msg{font-size:.8rem;min-height:0}
+  .breed-row{flex-wrap:nowrap;gap:8px}
+  .breed-row .btn{padding:8px 10px;font-size:.88rem}
+  .slots{gap:6px}
+  .step span.lbl{visibility:hidden}
+  .win{grid-template-columns:1fr}
+  .breed-title .eyebrow{display:none}
+}
+@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="intro">
+      <span class="eyebrow">Biologie · Vom Wolf zum Dackel</span>
+      <h1>Dackelzucht</h1>
+      <p>Ein Jäger braucht einen Hund für die Kaninchenjagd: klein und mit kurzen Beinen, damit er in den Kaninchenbau passt. Wähle in jeder Generation ein Zuchtpaar aus und schau dir an, wie die Nachkommen aussehen. Ziel ist ein Dackel mit höchstens 29 cm Schulterhöhe.</p>
+    </div>
+    <button class="btn" id="restart" type="button">Neu starten</button>
+  </header>
+
+  <section class="meter" aria-label="Weg zum Dackel">
+    <div class="meter-head">
+      <strong>Weg zum Dackel</strong>
+      <span id="meterText" class="eyebrow"></span>
+    </div>
+    <div class="steps" id="steps"></div>
+  </section>
+
+  <section class="task" id="a1">
+    <div>
+      <span class="eyebrow">Aufgabe 1</span>
+      <h2>Die beiden Familien</h2>
+    </div>
+    <p class="task-text">Suche ein Paar aus den beiden Familien aus, das du für die Zucht eines Hundes für die Kaninchenjagd verwenden kannst. <b>Ziehe eine Hündin (♀) und einen Rüden (♂) unten in das Feld „Zuchtpaar“.</b> Du kannst eine Karte auch antippen.</p>
+    <div class="families" id="families"></div>
+  </section>
+
+  <div id="gens"></div>
+  <div id="winBox"></div>
+
+  <section class="breed" id="breed" aria-label="Zuchtpaar">
+    <div class="breed-inner">
+      <div class="breed-title">
+        <span class="eyebrow" id="breedEyebrow">Gewähltes Zuchtpaar</span>
+        <h3 id="breedTitle">1. Zuchtpaar</h3>
+        <p class="msg" id="msg" aria-live="polite"></p>
+      </div>
+      <div class="breed-row">
+        <div class="slots">
+          <div class="slot" data-sex="f" id="slot-f"></div>
+          <span class="times" aria-hidden="true">×</span>
+          <div class="slot" data-sex="m" id="slot-m"></div>
+        </div>
+        <button class="btn primary" id="breedBtn" type="button" disabled>Nachkommen zeugen</button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+const IMG = {
+ "Dora": "bilder/dora.jpg",
+ "Gerd": "bilder/gerd.jpg",
+ "Clara": "bilder/clara.jpg",
+ "Hans": "bilder/hans.jpg",
+ "Thoralf": "bilder/thoralf.jpg",
+ "Horst": "bilder/horst.jpg",
+ "Martha": "bilder/martha.jpg",
+ "Hermine": "bilder/hermine.jpg",
+ "Kurt": "bilder/kurt.jpg",
+ "Sigrid": "bilder/sigrid.jpg",
+ "Karl": "bilder/karl.jpg",
+ "Elsbeth": "bilder/elsbeth.jpg",
+ "levels": [
+  [
+   "bilder/stufe1_1.jpg",
+   "bilder/stufe1_2.jpg",
+   "bilder/stufe1_3.jpg",
+   "bilder/stufe1_4.jpg"
+  ],
+  [
+   "bilder/stufe2_1.jpg",
+   "bilder/stufe2_2.jpg",
+   "bilder/stufe2_3.jpg",
+   "bilder/stufe2_4.jpg"
+  ],
+  [
+   "bilder/stufe3_1.jpg",
+   "bilder/stufe3_2.jpg",
+   "bilder/stufe3_3.jpg",
+   "bilder/stufe3_4.jpg"
+  ],
+  [
+   "bilder/stufe4_1.jpg",
+   "bilder/stufe4_2.jpg",
+   "bilder/stufe4_3.jpg",
+   "bilder/stufe4_4.jpg"
+  ],
+  [
+   "bilder/stufe5_1.jpg",
+   "bilder/stufe5_2.jpg",
+   "bilder/stufe5_3.jpg",
+   "bilder/stufe5_4.jpg"
+  ],
+  [
+   "bilder/stufe6_1.jpg",
+   "bilder/stufe6_2.jpg",
+   "bilder/stufe6_3.jpg",
+   "bilder/stufe6_4.jpg"
+  ],
+  [
+   "bilder/stufe7_1.jpg",
+   "bilder/stufe7_2.jpg",
+   "bilder/stufe7_3.jpg",
+   "bilder/stufe7_4.jpg"
+  ],
+  [
+   "bilder/stufe8_1.jpg",
+   "bilder/stufe8_2.jpg",
+   "bilder/stufe8_3.jpg",
+   "bilder/stufe8_4.jpg"
+  ],
+  [
+   "bilder/stufe9_1.jpg",
+   "bilder/stufe9_2.jpg",
+   "bilder/stufe9_3.jpg",
+   "bilder/stufe9_4.jpg"
+  ]
+ ]
+};
+
+const START = [
+  {fam:0, parents:[["Dora","f",70],["Gerd","m",72]], kids:[["Thoralf","m",53],["Horst","m",81],["Martha","f",69],["Hermine","f",74]]},
+  {fam:1, parents:[["Clara","f",81],["Hans","m",82]], kids:[["Kurt","m",82],["Sigrid","f",69],["Karl","m",84],["Elsbeth","f",81]]}
+];
+const NAMES = {
+  m:["Bruno","Waldi","Hasso","Fritz","Otto","Strolch","Anton","Rudi","Moritz","Lümmel","Felix","Bodo","Gustav","Max","Willi","Fips","Theo","Paul","Erwin","Kuno","Lutz","Benno","Arko","Rex"],
+  f:["Frieda","Lotte","Bella","Paula","Greta","Emma","Trude","Susi","Heidi","Anni","Wilma","Ida","Rosi","Nele","Mia","Luna","Hilde","Erna","Käthe","Fanni","Lene","Gerda","Resi","Toni"]
+};
+const DACKEL_CM = 29;
+/* Schulterhöhe der 9 Bildstufen, aus der gemessenen Bildhöhe abgeleitet (px → cm) */
+const LEVEL_PX = [191,187,184,166,164,150,130,127,97];
+const pxToCm = px => 25 + (px-97)*0.606;
+const LEVEL_CM = LEVEL_PX.map(pxToCm);
+const STEP = 8.5; /* Abnahme pro Generation bei idealer Auswahl */
+const LEVEL_NAMES = ["Wolf","","","","","","","","Dackel"];
+
+const $ = s => document.querySelector(s);
+const rnd = (a,b) => a + Math.floor(Math.random()*(b-a+1));
+const shuffle = a => { for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; };
+const level = cm => { let best=0; LEVEL_CM.forEach((c,i) => { if (Math.abs(c-cm) < Math.abs(LEVEL_CM[best]-cm)) best=i; }); return best+1; };
+const cmToPx = cm => 97 + (cm-25)/0.606;
+const sexWord = s => s==="f" ? "Hündin" : "Rüde";
+const sexSym = s => s==="f" ? "♀" : "♂";
+
+let dogs, history, candidates, slots, usedNames, done;
+
+function reset(){
+  dogs = {}; history = []; candidates = []; slots = {f:null,m:null}; usedNames = new Set(); done = false;
+  START.forEach(F => {
+    F.parents.forEach(([n,s,cm]) => addDog({name:n,sex:s,cm,img:IMG[n],gen:-1}));
+    F.kids.forEach(([n,s,cm]) => candidates.push(addDog({name:n,sex:s,cm,img:IMG[n],gen:0,fam:F.fam}).id));
+  });
+  $("#gens").innerHTML = ""; $("#winBox").innerHTML = "";
+  $("#breed").hidden = false;
+  renderFamilies(); renderSlots(); renderMeter();
+  setMsg("");
+}
+
+let nextId = 1;
+function addDog(d){ d.id = "d"+(nextId++); usedNames.add(d.name); dogs[d.id] = d; return d; }
+
+function pickName(sex){
+  const free = NAMES[sex].filter(n => !usedNames.has(n));
+  if (free.length) return free[rnd(0, free.length-1)];
+  let n = NAMES[sex][rnd(0, NAMES[sex].length-1)], k = 2;
+  while (usedNames.has(n+" "+k)) k++;
+  return n+" "+k;
+}
+
+function card(d, opts={}){
+  const el = document.createElement("div");
+  el.className = "dog" + (opts.small ? " small" : "") + (d.cm <= DACKEL_CM ? " dackel" : "");
+  el.dataset.id = d.id;
+  el.innerHTML = `<span class="pic"><img alt="${d.name}, ${sexWord(d.sex)}, etwa ${d.cm} cm Schulterhöhe" src="${d.img}"${d.scale ? ` style="transform:scale(${d.scale.toFixed(3)})"` : ""}></span>
+    <span class="meta"><span class="name"><span>${d.name}</span><span class="sex" title="${sexWord(d.sex)}">${sexSym(d.sex)}</span></span>
+    <span class="cm">${d.cm} cm Schulterhöhe</span><span class="tag">Zuchttier</span></span>`;
+  return el;
+}
+
+function pairRow(fDog, mDog){
+  const row = document.createElement("div");
+  row.className = "parents";
+  row.append(card(fDog,{small:true}));
+  const t = document.createElement("span"); t.className="times"; t.textContent="×"; t.setAttribute("aria-hidden","true");
+  row.append(t, card(mDog,{small:true}));
+  return row;
+}
+
+function renderFamilies(){
+  const box = $("#families"); box.innerHTML = "";
+  START.forEach((F,i) => {
+    const fam = document.createElement("div"); fam.className = "family";
+    const ids = Object.values(dogs);
+    const p = F.parents.map(([n]) => ids.find(d => d.name===n));
+    fam.innerHTML = `<span class="eyebrow">Familie ${i+1}: ${p[0].name} und ${p[1].name}</span>`;
+    fam.append(pairRow(p[0],p[1]));
+    const br = document.createElement("div"); br.className="bracket"; fam.append(br);
+    const kids = document.createElement("div"); kids.className="kids";
+    F.kids.forEach(([n]) => kids.append(card(ids.find(d => d.name===n && d.gen===0))));
+    fam.append(kids);
+    box.append(fam);
+  });
+  refreshCards();
+}
+
+function refreshCards(){
+  document.querySelectorAll(".wrap .dog").forEach(el => {
+    if (el.closest(".slot") || el.closest(".parents") || el.closest(".win")) return;
+    const id = el.dataset.id;
+    const live = !done && candidates.includes(id);
+    el.classList.toggle("draggable", live);
+    el.classList.toggle("picked", live && (slots.f===id || slots.m===id));
+    el.classList.toggle("locked", !live);
+    el.classList.toggle("chosen", !live && history.some(h => h.f===id || h.m===id));
+    el.tabIndex = live ? 0 : -1;
+    el.setAttribute("role", live ? "button" : "img");
+  });
+}
+
+function renderSlots(){
+  ["f","m"].forEach(s => {
+    const el = $("#slot-"+s);
+    el.innerHTML = ""; el.classList.toggle("filled", !!slots[s]);
+    if (slots[s]){
+      const c = card(dogs[slots[s]], {small:true}); el.append(c);
+      el.title = "Antippen zum Entfernen";
+    } else {
+      el.innerHTML = `<span class="big">${sexSym(s)}</span><span>${sexWord(s)} hierher ziehen</span>`;
+      el.title = "";
+    }
+  });
+  $("#breedBtn").disabled = !(slots.f && slots.m);
+  const n = history.length + 1;
+  $("#breedTitle").textContent = n === 1 ? "1. Zuchtpaar aus den Familien" : `${n}. Zuchtpaar aus den Nachkommen`;
+  $("#breedEyebrow").textContent = n === 1 ? "Gewähltes Zuchtpaar" : "Neues Zuchtpaar";
+  refreshCards();
+}
+
+function renderMeter(){
+  const all = Object.values(dogs).filter(d => d.gen >= 0);
+  const best = all.reduce((a,d) => d.cm < a.cm ? d : a, all[0]);
+  const bl = level(best.cm);
+  const steps = $("#steps");
+  if (!steps.children.length){
+    for (let i=0;i<9;i++){
+      const s = document.createElement("div"); s.className = "step";
+      s.innerHTML = `<span class="pic"><img alt="" src="${IMG.levels[i][0]}"></span><span class="${LEVEL_NAMES[i]?"":"lbl"}">${LEVEL_NAMES[i] || "Stufe "+(i+1)}</span>`;
+      steps.append(s);
+    }
+  }
+  [...steps.children].forEach((s,i) => { s.classList.toggle("reached", i < bl); s.classList.toggle("best", i === bl-1); });
+  const gen = history.length;
+  $("#meterText").textContent = `Kleinster Hund bisher: ${best.name}, ${best.cm} cm · ${gen} ${gen===1?"Generation":"Generationen"} gezüchtet`;
+}
+
+let msgTimer;
+function setMsg(t, warn){
+  const m = $("#msg"); m.textContent = t; m.classList.toggle("warn", !!warn);
+}
+
+function place(id, target){
+  const d = dogs[id];
+  if (!candidates.includes(id) || done) return;
+  if (slots[d.sex] === id){ slots[d.sex] = null; renderSlots(); setMsg(`${d.name} wurde aus dem Zuchtpaar genommen.`); return; }
+  if (target && target !== d.sex){
+    const el = $("#slot-"+target); el.classList.remove("shake"); void el.offsetWidth; el.classList.add("shake");
+    setMsg(`${d.name} ist ${d.sex==="f"?"eine Hündin":"ein Rüde"} und kommt deshalb auf den Platz ${sexSym(d.sex)}.`, true);
+  } else {
+    setMsg(slots[d.sex] ? `${d.name} ersetzt ${dogs[slots[d.sex]].name}.` : `${d.name} ist im Zuchtpaar.`);
+  }
+  slots[d.sex] = id;
+  renderSlots();
+}
+
+function breed(){
+  if (!(slots.f && slots.m) || done) return;
+  const F = dogs[slots.f], M = dogs[slots.m];
+  const mean = ((F.exact ?? F.cm) + (M.exact ?? M.cm)) / 2;
+  /* zwei größere und zwei kleinere Nachkommen; die beiden kleinsten sind immer eine Hündin und ein Rüde */
+  const small = Math.random() < .5 ? ["f","m"] : ["m","f"];
+  const plan = [
+    {off: 6 + rnd(-2,2), sex: small[0]}, {off: rnd(-2,2), sex: small[1]},
+    {off: -STEP + 1, sex: small[0]}, {off: -STEP - 1, sex: small[1]}
+  ];
+  const kids = shuffle(plan).map(p => {
+    const exact = Math.max(22, Math.min(88, mean + p.off));
+    const cm = Math.round(exact);
+    const lv = level(cm);
+    const scale = Math.max(.7, Math.min(1.35, cmToPx(cm) / LEVEL_PX[lv-1]));
+    const row = lv === 9 ? [0,1,3][rnd(0,2)] : rnd(0,3);
+    return addDog({name: pickName(p.sex), sex: p.sex, cm, exact, scale, img: IMG.levels[lv-1][row], gen: history.length+1});
+  });
+  history.push({f:F.id, m:M.id, kids: kids.map(k => k.id)});
+  candidates = kids.map(k => k.id);
+  slots = {f:null, m:null};
+  renderGen(history.length - 1);
+  renderSlots(); renderMeter();
+  const dackel = kids.filter(k => k.cm <= DACKEL_CM).sort((a,b) => a.cm-b.cm)[0];
+  if (dackel) return win(dackel);
+  setMsg("Wähle aus den neuen Nachkommen das nächste Zuchtpaar.");
+}
+
+function renderGen(i){
+  const h = history[i];
+  const F = dogs[h.f], M = dogs[h.m];
+  const kids = h.kids.map(id => dogs[id]);
+  const box = document.createElement("section"); box.className = "gen";
+  box.innerHTML = `<div class="gen-head"><div><span class="eyebrow">${i===0 ? "Gewähltes Zuchtpaar" : "Neues Zuchtpaar"} · Generation ${i+1}</span><h2>${F.name} × ${M.name}</h2></div></div>`;
+  box.append(pairRow(F,M));
+  const br = document.createElement("div"); br.className="bracket"; box.append(br);
+  const lab = document.createElement("p"); lab.className="label"; lab.textContent="deren Nachkommen"; box.append(lab);
+  const kd = document.createElement("div"); kd.className="kids"; kids.forEach(k => kd.append(card(k))); box.append(kd);
+  $("#gens").append(box);
+  requestAnimationFrame(() => box.scrollIntoView({behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block:"start"}));
+}
+
+function win(d){
+  done = true;
+  $("#breed").hidden = true;
+  refreshCards();
+  const rows = history.map((h,i) => {
+    const F=dogs[h.f], M=dogs[h.m], ks=h.kids.map(id=>dogs[id]);
+    return `<tr><td>${i+1}</td><td>${F.name} (${F.cm} cm) × ${M.name} (${M.cm} cm)</td><td>${ks.map(k=>k.name+" "+k.cm).join(", ")}</td></tr>`;
+  }).join("");
+  const box = $("#winBox");
+  box.innerHTML = `<section class="win" aria-live="polite">
+    <div class="win-dog"></div>
+    <div class="win-body">
+      <span class="eyebrow">Geschafft nach ${history.length} Generationen</span>
+      <h2>${d.name} ist ein Dackel!</h2>
+      <p>Mit nur ${d.cm} cm Schulterhöhe und kurzen Beinen passt ${d.name} in jeden Kaninchenbau. Durch die gezielte Auswahl der kleinsten Tiere in jeder Generation ist aus dem großen Wolfshund ein kleiner Jagdhund geworden.</p>
+      <div class="book"><table><thead><tr><th>Gen.</th><th>Zuchtpaar</th><th>Nachkommen (cm)</th></tr></thead><tbody>${rows}</tbody></table></div>
+      <label for="a4"><span class="eyebrow">Aufgabe 4</span><br>Beschreibe, wie du deine Zucht weitergeführt hast.</label>
+      <textarea id="a4" placeholder="Ich habe immer die beiden kleinsten Tiere ausgewählt, weil …"></textarea>
+      <div><button class="btn primary" type="button" id="again">Noch einmal züchten</button></div>
+    </div></section>`;
+  box.querySelector(".win-dog").append(card(d));
+  const ta = box.querySelector("#a4");
+  try { ta.value = localStorage.getItem("dackel-a4") || ""; } catch(e){}
+  ta.addEventListener("input", () => { try { localStorage.setItem("dackel-a4", ta.value); } catch(e){} });
+  box.querySelector("#again").addEventListener("click", () => { reset(); window.scrollTo({top:0}); });
+  requestAnimationFrame(() => box.scrollIntoView({behavior:"smooth", block:"start"}));
+}
+
+/* Ziehen und Ablegen mit Maus, Finger oder Stift */
+let drag = null;
+document.addEventListener("pointerdown", e => {
+  const el = e.target.closest(".dog.draggable");
+  if (!el || e.button > 0) return;
+  e.preventDefault();
+  drag = {id: el.dataset.id, el, x: e.clientX, y: e.clientY, ghost: null, over: null};
+});
+document.addEventListener("pointermove", e => {
+  if (!drag) return;
+  if (!drag.ghost){
+    if (Math.hypot(e.clientX-drag.x, e.clientY-drag.y) < 6) return;
+    drag.ghost = card(dogs[drag.id]); drag.ghost.classList.add("ghost"); document.body.append(drag.ghost);
+  }
+  drag.ghost.style.left = (e.clientX - 75) + "px";
+  drag.ghost.style.top = (e.clientY - 55) + "px";
+  const over = document.elementFromPoint(e.clientX, e.clientY)?.closest(".slot") || null;
+  if (over !== drag.over){ drag.over?.classList.remove("over"); over?.classList.add("over"); drag.over = over; }
+  const edge = 60;
+  if (e.clientY < edge) window.scrollBy(0, -12); else if (e.clientY > innerHeight - edge - ($("#breed").offsetHeight||0) && !over) window.scrollBy(0, 12);
+});
+function endDrag(e, cancel){
+  if (!drag) return;
+  const d = drag; drag = null;
+  d.over?.classList.remove("over");
+  if (d.ghost){ d.ghost.remove(); if (!cancel && d.over) place(d.id, d.over.dataset.sex); }
+  else if (!cancel) place(d.id);
+}
+document.addEventListener("pointerup", e => endDrag(e, false));
+document.addEventListener("pointercancel", e => endDrag(e, true));
+document.addEventListener("keydown", e => {
+  const el = e.target.closest?.(".dog.draggable");
+  if (el && (e.key === "Enter" || e.key === " ")){ e.preventDefault(); place(el.dataset.id); }
+});
+["f","m"].forEach(s => $("#slot-"+s).addEventListener("click", () => {
+  if (slots[s]){ const d = dogs[slots[s]]; slots[s] = null; renderSlots(); setMsg(`${d.name} wurde aus dem Zuchtpaar genommen.`); }
+}));
+$("#breedBtn").addEventListener("click", breed);
+$("#restart").addEventListener("click", () => { reset(); window.scrollTo({top:0}); });
+
+reset();
+</script>
+<p class="foot" style="max-width:1180px;margin:0 auto;padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))">Bilder: Arbeitsblatt „AB Dackelzucht“, Thema „Vom Wolf zum Dackel“. Die Schulterhöhen sind für das Spiel geschätzt.</p>
+
+</body>
+</html>
